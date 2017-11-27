@@ -1,4 +1,5 @@
 import os
+import sys
 import tempfile
 import shutil
 import subprocess
@@ -8,6 +9,7 @@ import datetime
 import socket
 import zipfile
 import distutils.dir_util
+import argparse
 
 appdata_roaming = os.getenv("APPDATA")
 appdata_local = os.getenv("LOCALAPPDATA")
@@ -96,5 +98,22 @@ def restore(path):
 	finally:
 		shutil.rmtree(dirpath)
 
-#print(backup(r"C:\Users\stefl\Desktop\test.zip"))
-print(restore(r"C:\Users\stefl\Desktop\test.zip"))
+def parse_args(args=None):
+	parser = argparse.ArgumentParser(description="Backup and restore script for Microsoft Outlook.")
+	parser.add_argument("path", help="path to archive")
+	parser.add_argument("-r", "--restore", help="don't start services", action="store_true")
+	return parser.parse_args(args)
+
+def main():
+	args = parse_args()
+	
+	if args.restore:
+		r = restore(args.path)
+	else:
+		r = backup(args.path)
+	
+	return 0 if r else 1
+
+if __name__ == "__main__":
+	exit = main()
+	sys.exit(exit)
