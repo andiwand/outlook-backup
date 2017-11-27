@@ -10,6 +10,7 @@ import socket
 import zipfile
 import distutils.dir_util
 import argparse
+import re
 
 appdata_roaming = os.getenv("APPDATA")
 appdata_local = os.getenv("LOCALAPPDATA")
@@ -17,16 +18,30 @@ appdata_local = os.getenv("LOCALAPPDATA")
 def ignore_db(path, children):
 	return [child for child in children if child.endswith(".pst") or child.endswith(".ost") or child.endswith(".nst")]
 
+def fix_registry(path, meta):
+	olduserdir = meta["userdir"].replace("\\", "\\\\")
+	newuserdir = get_meta()["userdir"].replace("\\", "\\\\")
+	with open(path, "r", encoding="utf-16-le") as infile:
+		lines = infile.readlines()
+	with open(path, "w", encoding="utf-16-le") as outfile:
+		for line in lines:
+			oldline = line
+			line = line.replace(olduserdir, newuserdir)
+			outfile.write(line)
+
+def get_meta():
+	return {
+		"username": getpass.getuser(),
+		"userdir": os.path.expanduser("~"),
+		"date": datetime.datetime.now().isoformat(),
+		"hostname": socket.gethostname(),
+	}
+
 def backup(path):
 	dirpath = tempfile.mkdtemp()
 	try:
 		# save meta
-		meta = {
-			"username": getpass.getuser(),
-			"userdir": os.path.expanduser("~"),
-			"date": datetime.datetime.now().isoformat(),
-			"hostname": socket.gethostname(),
-		}
+		meta = get_meta()
 		tmpdst = os.path.join(dirpath, "meta.json")
 		with open(tmpdst, "w") as outfile:
 			json.dump(meta, outfile, indent=4, sort_keys=True)
@@ -37,7 +52,7 @@ def backup(path):
 		r = subprocess.call(["regedit", r"/E", tmpdst, tmpsrc])
 		if r != 0:
 			print("!!! regedit error %d !!!" % r)
-			return False
+			return 1
 
 		# save "C:\Users\%username%\AppData\Local\Microsoft\Outlook" ignore pst, ost, nst
 		tmpsrc = os.path.join(appdata_local, r"Microsoft\Outlook")
@@ -56,7 +71,7 @@ def backup(path):
 
 		path, extension = os.path.splitext(path)
 		shutil.make_archive(path, "zip", dirpath)
-		return True
+		return 0
 	finally:
 		shutil.rmtree(dirpath)
 
@@ -72,12 +87,12 @@ def restore(path):
 			meta = json.load(infile)
 
 		# restore registry "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Office\16.0\Outlook"
-		# TODO: fix paths in registry.reg
 		tmpsrc = os.path.join(dirpath, "registry.reg")
+		fix_registry(tmpsrc, meta)
 		r = subprocess.call(["regedit", r"/S", tmpsrc])
 		if r != 0:
 			print("!!! regedit error %d !!!" % r)
-			return False
+			return 1
 
 		# restore "C:\Users\%username%\AppData\Local\Microsoft\Outlook"
 		tmpsrc = os.path.join(dirpath, r"files\AppData\Local\Microsoft\Outlook")
@@ -94,7 +109,7 @@ def restore(path):
 		tmpdst = os.path.join(appdata_roaming, r"Microsoft\Signatures")
 		distutils.dir_util.copy_tree(tmpsrc, tmpdst)
 		
-		return True
+		return 0
 	finally:
 		shutil.rmtree(dirpath)
 
@@ -106,13 +121,13 @@ def parse_args(args=None):
 
 def main():
 	args = parse_args()
-	
+
 	if args.restore:
 		r = restore(args.path)
 	else:
 		r = backup(args.path)
-	
-	return 0 if r else 1
+
+	return r
 
 if __name__ == "__main__":
 	exit = main()
