@@ -114,7 +114,7 @@ def restore(path):
 		shutil.rmtree(dirpath)
 
 def parse_args(args=None):
-	parser = argparse.ArgumentParser(description="Backup and restore script for Microsoft Outlook.")
+	parser = argparse.ArgumentParser(description="Backup and restore script for Microsoft Outlook settings.")
 	parser.add_argument("path", help="path to archive")
 	parser.add_argument("-r", "--restore", help="don't start services", action="store_true")
 	return parser.parse_args(args)
