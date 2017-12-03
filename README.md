@@ -8,7 +8,7 @@ pip install https://github.com/andiwand/outlook-backup/archive/master.zip
 
 ## outlook-backup
 ```
-usage: cli.py [-h] [-r] path
+usage: outlook-backup [-h] [-r] path
 
 Backup and restore script for Microsoft Outlook.
 
