@@ -7,7 +7,7 @@ setup(
     author="Andreas Stefl",
     install_requires=[],
     author_email="stefl.andreas@gmail.com",
-    description="Backup and restore script for Microsoft Outlook.",
+    description="Backup and restore script for Microsoft Outlook settings.",
     long_description="",
     package_dir={"": "src"},
     packages=["outlookbackup"],
