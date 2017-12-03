@@ -1,5 +1,5 @@
 # outlook-backup
-Backup and restore script for Microsoft Outlook.
+Backup and restore script for Microsoft Outlook settings.
 
 ## Installation
 ```
@@ -10,7 +10,7 @@ pip install https://github.com/andiwand/outlook-backup/archive/master.zip
 ```
 usage: outlook-backup [-h] [-r] path
 
-Backup and restore script for Microsoft Outlook.
+Backup and restore script for Microsoft Outlook settings.
 
 positional arguments:
   path           path to archive
