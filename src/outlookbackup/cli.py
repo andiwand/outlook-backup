@@ -1,3 +1,5 @@
+# regedit reference: http://www.robvanderwoude.com/regedit.php
+
 import os
 import sys
 import tempfile
@@ -12,8 +14,9 @@ import distutils.dir_util
 import argparse
 import re
 
-appdata_roaming = os.getenv("APPDATA")
-appdata_local = os.getenv("LOCALAPPDATA")
+VERSION = "1.0.0"
+APPDATA_ROAMING = os.getenv("APPDATA")
+APPDATA_LOCAL = os.getenv("LOCALAPPDATA")
 
 def ignore_db(path, children):
 	return [child for child in children if child.endswith(".pst") or child.endswith(".ost") or child.endswith(".nst")]
@@ -31,6 +34,7 @@ def fix_registry(path, meta):
 
 def get_meta():
 	return {
+		"version": VERSION,
 		"username": getpass.getuser(),
 		"userdir": os.path.expanduser("~"),
 		"date": datetime.datetime.now().isoformat(),
@@ -55,17 +59,17 @@ def backup(path):
 			return 1
 
 		# save "C:\Users\%username%\AppData\Local\Microsoft\Outlook" ignore pst, ost, nst
-		tmpsrc = os.path.join(appdata_local, r"Microsoft\Outlook")
+		tmpsrc = os.path.join(APPDATA_LOCAL, r"Microsoft\Outlook")
 		tmpdst = os.path.join(dirpath, r"files\AppData\Local\Microsoft\Outlook")
 		shutil.copytree(tmpsrc, tmpdst, ignore=ignore_db)
 
 		# save "C:\Users\%username%\AppData\Roaming\Microsoft\Outlook"
-		tmpsrc = os.path.join(appdata_roaming, r"Microsoft\Outlook")
+		tmpsrc = os.path.join(APPDATA_ROAMING, r"Microsoft\Outlook")
 		tmpdst = os.path.join(dirpath, r"files\AppData\Roaming\Microsoft\Outlook")
 		shutil.copytree(tmpsrc, tmpdst)
 
 		# save "C:\Users\%username%\AppData\Roaming\Microsoft\Signatures"
-		tmpsrc = os.path.join(appdata_roaming, r"Microsoft\Signatures")
+		tmpsrc = os.path.join(APPDATA_ROAMING, r"Microsoft\Signatures")
 		tmpdst = os.path.join(dirpath, r"files\AppData\Roaming\Microsoft\Signatures")
 		shutil.copytree(tmpsrc, tmpdst)
 
@@ -86,6 +90,8 @@ def restore(path):
 		with open(tmpsrc, "r") as infile:
 			meta = json.load(infile)
 
+		# TODO: clear registry tree, clear folders
+
 		# restore registry "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Office\16.0\Outlook"
 		tmpsrc = os.path.join(dirpath, "registry.reg")
 		fix_registry(tmpsrc, meta)
@@ -96,17 +102,17 @@ def restore(path):
 
 		# restore "C:\Users\%username%\AppData\Local\Microsoft\Outlook"
 		tmpsrc = os.path.join(dirpath, r"files\AppData\Local\Microsoft\Outlook")
-		tmpdst = os.path.join(appdata_local, r"Microsoft\Outlook")
+		tmpdst = os.path.join(APPDATA_LOCAL, r"Microsoft\Outlook")
 		distutils.dir_util.copy_tree(tmpsrc, tmpdst)
 
 		# restore "C:\Users\%username%\AppData\Roaming\Microsoft\Outlook"
 		tmpsrc = os.path.join(dirpath, r"files\AppData\Roaming\Microsoft\Outlook")
-		tmpdst = os.path.join(appdata_roaming, r"Microsoft\Outlook")
+		tmpdst = os.path.join(APPDATA_ROAMING, r"Microsoft\Outlook")
 		distutils.dir_util.copy_tree(tmpsrc, tmpdst)
 
 		# restore "C:\Users\%username%\AppData\Roaming\Microsoft\Signatures"
 		tmpsrc = os.path.join(dirpath, r"files\AppData\Roaming\Microsoft\Signatures")
-		tmpdst = os.path.join(appdata_roaming, r"Microsoft\Signatures")
+		tmpdst = os.path.join(APPDATA_ROAMING, r"Microsoft\Signatures")
 		distutils.dir_util.copy_tree(tmpsrc, tmpdst)
 		
 		return 0
