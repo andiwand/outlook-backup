@@ -2,6 +2,7 @@
 
 import os
 import sys
+import ctypes
 import tempfile
 import shutil
 import subprocess
@@ -122,10 +123,20 @@ def restore(path):
 def parse_args(args=None):
 	parser = argparse.ArgumentParser(description="Backup and restore script for Microsoft Outlook settings.")
 	parser.add_argument("path", help="path to archive")
-	parser.add_argument("-r", "--restore", help="don't start services", action="store_true")
+	parser.add_argument("-r", "--restore", help="import instead of export", action="store_true")
 	return parser.parse_args(args)
 
+def is_admin():
+	try:
+		return ctypes.windll.shell32.IsUserAnAdmin()
+	except:
+		return False
+
 def main():
+	if not is_admin():
+		print("need administrator privileges")
+		return 2
+
 	args = parse_args()
 
 	if args.restore:
